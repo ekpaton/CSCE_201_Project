@@ -15,7 +15,7 @@ struct Ship {
     int size;
     bool placed;
 };
-// This is a new comment
+
 void initializeBoard(char board[GRID_SIZE][GRID_SIZE]);
 void interactiveShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& ships);
 void placeAllComputerShips(char board[GRID_SIZE][GRID_SIZE]);
