@@ -95,6 +95,7 @@ void initializeBoard(char board[GRID_SIZE][GRID_SIZE]) {
 // pull in the board and the vector of ships 
 void interactiveShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& ships) 
 {
+    int count = 0;
 
     // loop over all the ships in the vector
     for (Ship& ship : ships) 
@@ -110,10 +111,14 @@ void interactiveShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& sh
 
             // this will store direction 
             char orientation;
+            if (count == 0)
+            {
+                displayBoard(board);
 
+            }
             cout << "Place " << ship.name << " of size " << ship.size << ".\n";
 
-            displayBoard(board);
+            
             cout << "Enter the coordinates of the starting position (e.g., A1) \nand orientation direction (H for horizontal, V for vertical): ";
             
             
@@ -132,7 +137,7 @@ void interactiveShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& sh
 
 
             // input validation for the users input 
-            if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE && (orientation == 'H' || orientation == 'V')) {
+            if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE && (toupper(orientation) == 'H' || toupper(orientation) == 'V')) {
                 // check the size and location of ship on the board and if it can be placed
                 if (validShipPlacement(board, x, y, ship.size, orientation)) 
                 {
@@ -147,6 +152,8 @@ void interactiveShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& sh
             else {
                 cout << "Invalid input. Try again.\n";
             }
+            displayBoard(board);
+            count++; 
         }
     }
 }
