@@ -29,7 +29,7 @@ struct Shot {
 void initializeBoard(char board[GRID_SIZE][GRID_SIZE], int gridSize);
 void interactiveShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& ships, int gridSize);
 void placeAllComputerShips(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& cpuShips, int gridSize);
-bool takeShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE], vector<Ship>& ships, const string& shot, int gridSize);
+bool takeShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE], vector<Ship>& ships, const string& shot, int gridSize, bool& isMiss);
 bool checkAllShipsSunk(char board[GRID_SIZE][GRID_SIZE]);
 void computerShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE], vector<Shot>& cpuShotHistory, int gridSize);
 void displayBoard(const char board[GRID_SIZE][GRID_SIZE], int gridSize);
@@ -108,13 +108,17 @@ int main() {
             string shot;
             cout << "Enter your shot (e.g., A1): ";
             cin >> shot;
-            validShot = takeShot(computerShips, playerShots, cpuShipsList, shot, gridSize);
+            bool isMiss = false;
+            validShot = takeShot(computerShips, playerShots, cpuShipsList, shot, gridSize, isMiss);
             if (validShot) {
-                cout << "Hit!\n";
+                if (isMiss) {
+                    cout << "Miss!\n";
+                }
+                else {
+                    cout << "Hit!\n";
+                }
             }
-            else {
-                cout << "Miss!\n";
-            }
+
 
             gameOver = checkAllShipsSunk(computerShips);
             if (gameOver) {
@@ -248,7 +252,7 @@ void randomizeShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& ship
     }
 }
 
-bool takeShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE], vector<Ship>& ships, const string& shot, int gridSize) {
+bool takeShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE], vector<Ship>& ships, const string& shot, int gridSize, bool& isMiss) {
     if (shot.length() < 2) {
         cout << "Invalid input. Try again.\n";
         return false;
@@ -273,14 +277,19 @@ bool takeShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE]
         for (auto& ship : ships) {
             if (ship.placed && board[row][col] == SHIP) {
                 ship.hitCount++;
+
                 break;
             }
         }
+        isMiss = false;
         return true;
+
     }
     else {
         shots[row][col] = MISS;
+        isMiss = true;
         return true;
+
     }
 }
 
