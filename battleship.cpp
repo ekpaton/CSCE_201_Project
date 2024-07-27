@@ -16,6 +16,7 @@ struct Ship {
     string name;
     int size;
     bool placed;
+    int hitCount;
 };
 
 struct Shot {
@@ -25,14 +26,18 @@ struct Shot {
 
 void initializeBoard(char board[GRID_SIZE][GRID_SIZE]);
 void interactiveShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& ships);
-void placeAllComputerShips(char board[GRID_SIZE][GRID_SIZE]);
-bool takeShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE], const string& shot);
-bool checkAllShipsSunk(char board[GRID_SIZE][GRID_SIZE]);
+void placeAllComputerShips(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& cpuShips);
+bool takeShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE], vector<Ship>& ships, const string& shot);
+bool checkAllShipsSunk(const vector<Ship>& ships);
 void computerShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE], vector<Shot>& cpuShotHistory);
 void displayBoard(const char board[GRID_SIZE][GRID_SIZE]);
+void displayCpuGrid(const char board[GRID_SIZE][GRID_SIZE]);
+void displayCpuShotHistory(const vector<Shot>& cpuShotHistory);
+void clearConsole();
 bool validShipPlacement(char board[GRID_SIZE][GRID_SIZE], int x, int y, int size, char orientation);
 void placeShip(char board[GRID_SIZE][GRID_SIZE], int x, int y, int size, char orientation);
-void displayCpuShotHistory(const vector<Shot>& cpuShotHistory);
+void randomizeShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& ships);
+void announceShipStatus(const Ship& ship);
 
 int main() {
     srand(time(0));
@@ -48,34 +53,47 @@ int main() {
     initializeBoard(computerShots);
 
     vector<Ship> playerShipsList = {
-        {"Carrier", 5, false},
-        {"Battleship", 4, false},
-        {"Cruiser", 3, false},
-        {"Submarine", 3, false},
-        {"Destroyer", 2, false}
+        {"Carrier", 5, false, 0},
+        {"Battleship", 4, false, 0},
+        {"Cruiser", 3, false, 0},
+        {"Submarine", 3, false, 0},
+        {"Destroyer", 2, false, 0}
     };
 
+    vector<Ship> cpuShipsList = {
+        {"Carrier", 5, false, 0},
+        {"Battleship", 4, false, 0},
+        {"Cruiser", 3, false, 0},
+        {"Submarine", 3, false, 0},
+        {"Destroyer", 2, false, 0}
+    };
+
+    clearConsole();
     cout << "Player, place your ships:\n";
     interactiveShipPlacement(playerShips, playerShipsList);
 
-    placeAllComputerShips(computerShips);
+    placeAllComputerShips(computerShips, cpuShipsList);
 
     vector<Shot> cpuShotHistory;
     bool gameOver = false;
     while (!gameOver) {
-        string shot;
+        clearConsole();
+
+        cout << "Player's Shots on CPU Board:\n";
         displayBoard(playerShots);
-        displayCpuShotHistory(cpuShotHistory);
+        cout << "\nCPU Board:\n";
+        displayCpuGrid(computerShots);
+
+        string shot;
         cout << "Enter your shot (e.g., A1): ";
         cin >> shot;
-        if (takeShot(computerShips, playerShots, shot)) {
+        if (takeShot(computerShips, playerShots, cpuShipsList, shot)) {
             cout << "Hit!\n";
-        }
-        else {
+        } else {
             cout << "Miss!\n";
         }
 
-        gameOver = checkAllShipsSunk(computerShips);
+        gameOver = checkAllShipsSunk(cpuShipsList);
         if (gameOver) {
             cout << "Player wins!\n";
             break;
@@ -83,13 +101,21 @@ int main() {
 
         computerShot(playerShips, computerShots, cpuShotHistory);
 
-        gameOver = checkAllShipsSunk(playerShips);
+        gameOver = checkAllShipsSunk(playerShipsList);
         if (gameOver) {
             cout << "Computer wins!\n";
         }
     }
 
     return 0;
+}
+
+void clearConsole() {
+#if defined(_WIN32) || defined(_WIN64)
+    system("cls");
+#else
+    system("clear");
+#endif
 }
 
 void initializeBoard(char board[GRID_SIZE][GRID_SIZE]) {
@@ -104,12 +130,18 @@ void interactiveShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& sh
     for (Ship& ship : ships) {
         bool placed = false;
         while (!placed) {
+            clearConsole();
             string startingPoint;
             char orientation;
             cout << "Place " << ship.name << " of size " << ship.size << ".\n";
             displayBoard(board);
-            cout << "Enter the coordinates of the starting position (e.g., A1) \nand orientation direction (H for horizontal, V for vertical): ";
+            cout << "Enter the coordinates of the starting position (e.g., A1), orientation direction (H for horizontal, V for vertical), or R for random: ";
             cin >> startingPoint >> orientation;
+
+            if (toupper(orientation) == 'R') {
+                randomizeShipPlacement(board, ships);
+                return;
+            }
 
             int x = toupper(startingPoint[0]) - 'A';
             int y = stoi(startingPoint.substr(1)) - 1;
@@ -131,22 +163,14 @@ void interactiveShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& sh
 
 bool validShipPlacement(char board[GRID_SIZE][GRID_SIZE], int x, int y, int size, char orientation) {
     if (orientation == 'H') {
-        if (y + size > GRID_SIZE) {
-            return false;
-        }
+        if (y + size > GRID_SIZE) return false;
         for (int i = 0; i < size; ++i) {
-            if (board[x][y + i] != EMPTY) {
-                return false;
-            }
+            if (board[x][y + i] != EMPTY) return false;
         }
     } else {
-        if (x + size > GRID_SIZE) {
-            return false;
-        }
+        if (x + size > GRID_SIZE) return false;
         for (int i = 0; i < size; ++i) {
-            if (board[x + i][y] != EMPTY) {
-                return false;
-            }
+            if (board[x + i][y] != EMPTY) return false;
         }
     }
     return true;
@@ -164,15 +188,7 @@ void placeShip(char board[GRID_SIZE][GRID_SIZE], int x, int y, int size, char or
     }
 }
 
-void placeAllComputerShips(char board[GRID_SIZE][GRID_SIZE]) {
-    vector<Ship> ships = {
-        {"Carrier", 5, false},
-        {"Battleship", 4, false},
-        {"Cruiser", 3, false},
-        {"Submarine", 3, false},
-        {"Destroyer", 2, false}
-    };
-
+void randomizeShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& ships) {
     for (Ship& ship : ships) {
         bool placed = false;
         while (!placed) {
@@ -188,21 +204,60 @@ void placeAllComputerShips(char board[GRID_SIZE][GRID_SIZE]) {
     }
 }
 
-bool takeShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE], const string& shot) {
-    if (shot.length() < 2) {
-        return false;
-    }
+bool takeShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE], vector<Ship>& ships, const string& shot) {
+    if (shot.length() < 2) return false;
 
     int row = toupper(shot[0]) - 'A';
     int col = stoi(shot.substr(1)) - 1;
 
-    if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE) {
-        return false;
-    }
+    if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE) return false;
 
     if (board[row][col] == SHIP) {
         board[row][col] = HIT;
         shots[row][col] = HIT;
+
+        for (auto& ship : ships) {
+
+            int shipStartRow, shipStartCol, shipEndRow, shipEndCol;
+            bool isHorizontal = true;
+
+            for (int i = 0; i < GRID_SIZE; ++i) {
+                for (int j = 0; j < GRID_SIZE; ++j) {
+                    if (board[i][j] == SHIP) {
+                        if (j + ship.size - 1 < GRID_SIZE && board[i][j + ship.size - 1] == SHIP) {
+
+                            shipStartRow = i;
+                            shipStartCol = j;
+                            shipEndRow = i;
+                            shipEndCol = j + ship.size - 1;
+                            isHorizontal = true;
+                        } else if (i + ship.size - 1 < GRID_SIZE && board[i + ship.size - 1][j] == SHIP) {
+
+                            shipStartRow = i;
+                            shipStartCol = j;
+                            shipEndRow = i + ship.size - 1;
+                            shipEndCol = j;
+                            isHorizontal = false;
+                        }
+                    }
+                }
+            }
+
+            if (isHorizontal) {
+                if (row == shipStartRow && col >= shipStartCol && col <= shipEndCol) {
+                    ship.hitCount++;
+                    announceShipStatus(ship);
+                    break;
+                }
+            } else {
+                if (col == shipStartCol && row >= shipStartRow && row <= shipEndRow) {
+                    ship.hitCount++;
+                    announceShipStatus(ship);
+                    break;
+                }
+            }
+        }
+
         return true;
     } else {
         shots[row][col] = MISS;
@@ -210,12 +265,10 @@ bool takeShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE]
     }
 }
 
-bool checkAllShipsSunk(char board[GRID_SIZE][GRID_SIZE]) {
-    for (int i = 0; i < GRID_SIZE; ++i) {
-        for (int j = 0; j < GRID_SIZE; ++j) {
-            if (board[i][j] == SHIP) {
-                return false;
-            }
+bool checkAllShipsSunk(const vector<Ship>& ships) {
+    for (const auto& ship : ships) {
+        if (ship.hitCount < ship.size) {
+            return false;
         }
     }
     return true;
@@ -242,12 +295,16 @@ void computerShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_S
                 shot.isHit = false;
             }
             cpuShotHistory.push_back(shot);
+            if (cpuShotHistory.size() > 10) {
+                cpuShotHistory.erase(cpuShotHistory.begin());
+            }
             shotTaken = true;
         }
     }
 }
 
 void displayBoard(const char board[GRID_SIZE][GRID_SIZE]) {
+    
     cout << "  ";
     for (int i = 0; i < GRID_SIZE; ++i) {
         cout << i + 1 << " ";
@@ -263,10 +320,59 @@ void displayBoard(const char board[GRID_SIZE][GRID_SIZE]) {
     }
 }
 
+void placeAllComputerShips(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& cpuShips) {
+    for (Ship& ship : cpuShips) {
+        bool placed = false;
+        while (!placed) {
+            int x = rand() % GRID_SIZE;
+            int y = rand() % GRID_SIZE;
+            char orientation = (rand() % 2 == 0) ? 'H' : 'V';
+            if (validShipPlacement(board, x, y, ship.size, orientation)) {
+                placeShip(board, x, y, ship.size, orientation);
+                ship.placed = true;
+                placed = true;
+            }
+        }
+    }
+}
+
+void displayCpuGrid(const char board[GRID_SIZE][GRID_SIZE]) {
+
+    cout << "  ";
+    for (int i = 0; i < GRID_SIZE; ++i) {
+        cout << i + 1 << " ";
+    }
+    cout << endl;
+
+    for (int i = 0; i < GRID_SIZE; ++i) {
+        cout << char('A' + i) << " ";
+        for (int j = 0; j < GRID_SIZE; ++j) {
+            if (board[i][j] == HIT || board[i][j] == MISS) {
+                cout << board[i][j] << " ";
+            } else {
+                cout << EMPTY << " ";
+            }
+        }
+        cout << endl;
+    }
+}
+
 void displayCpuShotHistory(const vector<Shot>& cpuShotHistory) {
     cout << "CPU Shot History:\n";
-    for (const Shot& shot : cpuShotHistory) {
-        cout << shot.coordinates << " - " << (shot.isHit ? "Hit" : "Miss") << "\n";
+    for (size_t i = 0; i < cpuShotHistory.size(); i++) {
+        if (i > 0 && i % 8 == 0) {
+            cout << "\n";
+        }
+        cout << cpuShotHistory[i].coordinates << (cpuShotHistory[i].isHit ? "(Hit)" : "(Miss)") << " ";
+    }
+    cout << "\n";
+}
+
+void announceShipStatus(const Ship& ship) {
+    if (ship.hitCount == ship.size) {
+        cout << "You sunk the " << ship.name << "!\n";
+    } else {
+        cout << "You hit the " << ship.name << "!\n";
     }
 }
 
