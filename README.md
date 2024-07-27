@@ -5,7 +5,7 @@
 4. Now press enter to send your selection into the program.
 5. Hit enter again to clear the screen and enter your next selection if you didn't choose randomized ship placement.
 6. Continue placing all remaining ships.
-7. Once all ships are placed now it is time to take shots on your enemy ships.
+7. Once all ships are placed press enter and now it is time to take shots on your enemy ships.
 8. Enter a character (A-J) followed by a number (1-10). This represents the grid location you want to fire at.
 9. Press enter and the game will provide feedback as to whether your shot hit or miss an enemy ship.
 10. The game will also display the computers grid selection and whether or not it hit your ship.
