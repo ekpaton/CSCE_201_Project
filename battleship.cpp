@@ -8,7 +8,7 @@
 using namespace std;
 
 const int GRID_SIZE = 10;
-const int DEMO_GRID_SIZE = 5;  // For demo mode
+const int DEMO_GRID_SIZE = 5;  // For demo  mode
 const char EMPTY = '.';
 const char SHIP = 'S';
 const char HIT = 'X';
