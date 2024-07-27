@@ -8,7 +8,7 @@
 using namespace std;
 
 const int GRID_SIZE = 10;
-const int DEMO_GRID_SIZE = 5;  // For demo  mode
+const int DEMO_GRID_SIZE = 5;  // For demo mode
 const char EMPTY = '.';
 const char SHIP = 'S';
 const char HIT = 'X';
@@ -94,6 +94,8 @@ int main() {
 
         vector<Shot> cpuShotHistory;
         bool gameOver = false;
+        bool validShot = true;
+
         while (!gameOver) {
             cin.get();
             cin.get();
@@ -106,7 +108,8 @@ int main() {
             string shot;
             cout << "Enter your shot (e.g., A1): ";
             cin >> shot;
-            if (takeShot(computerShips, playerShots, cpuShipsList, shot, gridSize)) {
+            validShot = takeShot(computerShips, playerShots, cpuShipsList, shot, gridSize);
+            if (validShot) {
                 cout << "Hit!\n";
             }
             else {
@@ -118,9 +121,10 @@ int main() {
                 cout << "Player wins!\n";
                 break;
             }
-
-            computerShot(playerShips, computerShots, cpuShotHistory, gridSize);
-
+            if (validShot)
+            {
+                computerShot(playerShips, computerShots, cpuShotHistory, gridSize);
+            }
             gameOver = checkAllShipsSunk(playerShips);
             if (gameOver) {
                 cout << "Computer wins!\n";
@@ -276,7 +280,7 @@ bool takeShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE]
     }
     else {
         shots[row][col] = MISS;
-        return false;
+        return true;
     }
 }
 
