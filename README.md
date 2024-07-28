@@ -1,4 +1,7 @@
 # CSCE_201_Project
+Purpose: The objective of Project Battleship was to create a fully playable game in the command window that is comparable to the original board game "BATTLESHIP".
+
+Player Instructions:
 1. Begin by placing your ships on the player board.
 2. Enter a character (A-J), followed by a number (1-10). This will be the starting place of where your ship is placed. 
 3. Now enter a space and enter either H, V, or R. This will decided the orientation of the ship placement, or randomize your ship placement. 
