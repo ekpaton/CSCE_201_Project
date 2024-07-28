@@ -28,7 +28,6 @@ struct Shot {
 
 void initializeBoard(char board[GRID_SIZE][GRID_SIZE], int gridSize);
 void interactiveShipPlacement(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& ships, int gridSize);
-void placeAllComputerShips(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& cpuShips, int gridSize);
 bool takeShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE], vector<Ship>& ships, const string& shot, int gridSize, bool& isMiss);
 bool checkAllShipsSunk(char board[GRID_SIZE][GRID_SIZE]);
 void computerShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_SIZE], vector<Shot>& cpuShotHistory, int gridSize);
@@ -90,7 +89,7 @@ int main() {
         cout << "Player, place your ships:\n";
         interactiveShipPlacement(playerShips, playerShipsList, gridSize);
 
-        placeAllComputerShips(computerShips, cpuShipsList, gridSize);
+        randomizeShipPlacement(computerShips, cpuShipsList, gridSize);
 
         vector<Shot> cpuShotHistory;
         bool gameOver = false;
@@ -332,22 +331,6 @@ void computerShot(char board[GRID_SIZE][GRID_SIZE], char shots[GRID_SIZE][GRID_S
                 cpuShotHistory.erase(cpuShotHistory.begin());
             }
             shotTaken = true;
-        }
-    }
-}
-
-void placeAllComputerShips(char board[GRID_SIZE][GRID_SIZE], vector<Ship>& cpuShips, int gridSize) {
-    for (Ship& ship : cpuShips) {
-        bool placed = false;
-        while (!placed) {
-            int x = rand() % gridSize;
-            int y = rand() % gridSize;
-            char orientation = (rand() % 2 == 0) ? 'H' : 'V';
-            if (validShipPlacement(board, x, y, ship.size, orientation, gridSize)) {
-                placeShip(board, x, y, ship.size, orientation);
-                ship.placed = true;
-                placed = true;
-            }
         }
     }
 }
